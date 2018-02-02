@@ -17,17 +17,40 @@ class App extends Component {
       context: this,
       state: 'fishes'
     });
+
+    const localStorageRef = localStorage.getItem(`order-${this.props.match.params.storeId}`);
+    if(localStorageRef) {
+      this.setState({
+        order: JSON.parse(localStorageRef)
+      });
+    }
   }
 
   componentWillUnmount() {
     base.removeBinding(this.ref);
   }
 
+  componentWillUpdate(nextProps, nextState) {
+    localStorage.setItem(`order-${this.props.match.params.storeId}`, JSON.stringify(nextState.order));
+  }
+
   addFish = (fish) => {
     const fishes = {...this.state.fishes};
     const timestamp = Date.now();
     fishes[`fish-${timestamp}`] = fish;
-    this.setState({fishes})
+    this.setState({fishes});
+  }
+
+  updateFish = (key, fish) => {
+    const fishes = {...this.state.fishes};
+    fishes[key] = fish;
+    this.setState({fishes});
+  }
+
+  removeFish = (key) => {
+    const fishes = {...this.state.fishes};
+    fishes[key] = null;
+    this.setState({fishes});
   }
 
   loadFishes = () => {
@@ -42,6 +65,12 @@ class App extends Component {
     this.setState({order});
   }
 
+  removeFromOrder = (key) => {
+    const order = {...this.state.order};
+    delete order[key];
+    this.setState({order})
+  }
+
   render() {
     return (
       <div className="catch-of-the-day">
@@ -51,8 +80,8 @@ class App extends Component {
             {Object.keys(this.state.fishes).map(key => <Fish key={key} index={key} addToOrder={this.addToOrder} details={this.state.fishes[key]}/>)}
           </ul>
         </div>
-        <Order fishes={this.state.fishes} order={this.state.order}/>
-        <Inventory addFish={this.addFish} loadSamples={this.loadFishes}/>
+        <Order fishes={this.state.fishes} removeFromOrder={this.removeFromOrder} order={this.state.order} params={this.props.match.params}/>
+        <Inventory addFish={this.addFish} removeFish={this.removeFish} updateFish={this.updateFish} loadSamples={this.loadFishes} fishes={this.state.fishes}/>
       </div>
     );
   }
